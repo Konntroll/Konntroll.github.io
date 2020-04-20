@@ -1,0 +1,192 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>Memocards</title>
+		<link rel="stylesheet" type="text/css" href="memostyles.css">
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	</head>
+	<body>
+		<div id="memoflip">
+			<memoflip></memoflip>
+		</div>
+	</body>
+</html>
+
+<script>
+
+Vue.component('tile', {
+	props: {
+		image: {
+			type: Number,
+			required: true
+		},
+		index: {
+			type: Number,
+			required: true
+		}
+	},
+	data() {
+		return {
+			flipped: false,
+			hidden: false
+		}
+	},
+	template: `
+		<div class="tile"
+			 ref="image"
+			 v-bind:id="index"
+			 v-on:click="check"
+			 v-bind:class="{flipped: flipped, hidden: hidden}">
+			<img src="back.png" class="front">
+			<img class="back" v-bind:src="'images/' + image + '.jpg'">
+		</div>
+	`,
+	methods: {
+		check() {
+			this.flipped = true;
+			this.$emit('tile-flipped', {imageId: this.$refs.image.id, imageNum: this.image});
+		},
+	},
+})
+
+Vue.component('board', {
+	props: {
+		deck: {
+			type: Array,
+			required: true
+		}
+	},
+	data() {
+		return {
+			matches: []
+		}
+	},
+	template: `
+		<div class="board">
+			<div v-for="(image, index) in deck">
+				<tile v-bind:index="index"
+					  v-bind:image="image" 
+					  v-on:tile-flipped="compare" 
+					  ref="allPics" 
+					  v-bind:key="index"></tile>
+			</div>
+		</div>
+	`,
+	methods: {
+		compare(img) {
+			this.$emit('clicked'); //counts the number of clicks used to solve the board
+			if (this.matches.length < 2) {
+				//if the matches array contains 1 or fewer elements
+				//add the object passed to the function to the array
+				this.matches.push(img);
+				if (this.matches.length == 2 && this.matches[0].imageId == img.imageId) {
+					//check if the same tile was clicked twice and ignore it if it was
+					//by removing the repeated instance from the matches array
+					this.matches.pop();
+				}
+			} 
+			if (this.matches.length == 2) {
+				//check if the same picture is on the two flipped tiles
+				if (this.matches[0].imageNum == this.matches[1].imageNum &&
+					this.matches[0].imageId != this.matches[1].imageId) {
+					//and hide those tiles if it is
+					setTimeout(this.hide.bind(this, this.matches), 1500);
+				} else {
+					//otherwise, flip the tiles face down again
+					setTimeout(this.unflip.bind(this, this.matches), 1500);
+				}
+				//and clear the matches array for the next round of checks
+				this.matches = [];
+			}
+		},
+		unflip(match) {
+			this.$refs.allPics[match[0].imageId].flipped = false;
+			this.$refs.allPics[match[1].imageId].flipped = false;
+		},
+		hide(match){
+			this.$refs.allPics[match[0].imageId].hidden = true;
+			this.$refs.allPics[match[1].imageId].hidden = true;
+		}
+	}
+})
+
+var memoflip = new Vue ({
+	el: '#memoflip',
+	data: {
+		totalPics: 54,
+		deck: [],
+		size: 10,
+		counter: 0,
+		resetKey: 0
+	},
+	template: `
+		<div>
+			<div id="nav-bar">
+				<div id="small" v-on:click="resize(4)" alt="Smaller board">
+					<img src="small.png"></img>
+				</div>
+				<div id="big" v-on:click="resize(6)">
+					<img src="big.png"></img>
+				</div>
+				<div id="counter">{{counter}}</div>
+			</div>
+			<board v-bind:deck="deck" v-on:clicked="addClick" v-bind:key="resetKey"></board>
+		</div>
+	`,
+	methods: {
+		buildDeck() {
+			var picNum = 0;
+			var randRange = this.totalPics;
+			var numRange = [];
+			var imgSet = [];
+			
+			//the following loop creates an array of numbers, 0 to {{totalPics - 1}}
+			while (numRange.length < randRange) {
+				numRange.push(picNum);
+				picNum++;
+			}
+			
+			//this selects {{gridSize}} random items from the previous array to seed our tile deck
+			while (imgSet.length < this.size) {
+				picNum = Math.floor(Math.random() * randRange);
+				imgSet.push(numRange[picNum]);
+				numRange.splice(picNum, 1);
+				randRange--;
+			}
+			
+			//copy each item in the seed deck to create tile pairs
+			imgSet = imgSet.concat(imgSet);
+			
+			//shuffle the deck we produced so the tiles are in random order
+			//and transfer the results to our application's deck parameter
+			this.shuffle(imgSet);
+		},
+		shuffle(set) {
+			var range = set.length;
+			var tileNum = 0;
+			while (this.deck.length < this.size * 2) {
+				tileNum = Math.floor(Math.random() * range);
+				this.deck.push(set[tileNum]);
+				set.splice(tileNum, 1);
+				range--;
+			}
+		},
+		addClick() {
+			this.counter++;
+		},
+		resize(gridSize) {
+			this.deck = [];
+			this.counter = 0;
+			document.documentElement.style.setProperty("--colNum", gridSize);
+			this.size = gridSize * 2;
+			this.resetKey++; //clears the board if it is resized
+			this.buildDeck();
+		}
+	},
+	created() {
+		this.buildDeck();
+	}
+})
+
+</script>
