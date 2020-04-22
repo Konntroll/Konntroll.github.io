@@ -66,8 +66,8 @@ Vue.component('board', {
 		<div class="board">
 			<div v-for="(image, index) in deck">
 				<tile v-bind:index="index"
-					  v-bind:image="image" 
-					  v-on:tile-flipped="compare" 
+					  v-bind:image="image"
+					  v-on:tile-flipped="compare"
 					  ref="allPics" 
 					  v-bind:key="index"></tile>
 			</div>
@@ -107,6 +107,7 @@ Vue.component('board', {
 		hide(match){
 			this.$refs.allPics[match[0].imageId].hidden = true;
 			this.$refs.allPics[match[1].imageId].hidden = true;
+			this.$emit('progress'); //tell the app how close we are to solving the board
 		}
 	}
 })
@@ -118,6 +119,9 @@ var memoflip = new Vue ({
 		deck: [],
 		size: 10,
 		counter: 0,
+		progress: 0,
+		isInProgress: true,
+		no: false,
 		resetKey: 0
 	},
 	template: `
@@ -131,7 +135,19 @@ var memoflip = new Vue ({
 				</div>
 				<div id="counter">{{counter}}</div>
 			</div>
-			<board v-bind:deck="deck" v-on:clicked="addClick" v-bind:key="resetKey"></board>
+			<board v-bind:deck="deck"
+				   v-bind:key="resetKey"
+				   v-if="isInProgress"
+				   v-on:clicked="addClick"
+				   v-on:progress="gameProgress"></board>
+			<div id="gameOver" v-if="!isInProgress">
+				<h1>Game Over</h1>
+				<h3>Congratulations, you've completed the board in {{ counter }} clicks.</h3>
+				<h3>Would you like to have another go?</h3>
+				<button id="yes" v-on:click="resize(5)">Hell yeah!</button>
+				<button id="no" v-on:click="redirect">Nah, I'm good.</button>
+				<h3 v-if="no">Yeah, you totally have better things to do. Well, go on then.</h3>
+			</div>
 		</div>
 	`,
 	methods: {
@@ -175,13 +191,36 @@ var memoflip = new Vue ({
 		addClick() {
 			this.counter++;
 		},
+		gameProgress() {
+			this.progress += 2;
+			if (this.progress == this.size * 2) {
+				this.isInProgress = false;
+			}
+		},
 		resize(gridSize) {
 			this.deck = [];
 			this.counter = 0;
+			this.progress = 0;
+			this.isInProgress = true;
 			document.documentElement.style.setProperty("--colNum", gridSize);
 			this.size = gridSize * 2;
 			this.resetKey++; //clears the board if it is resized
 			this.buildDeck();
+		},
+		redirect() {
+			this.no = true;
+			goTo = [
+				'https://www.facebook.com/',
+				'https://unsplash.com/s/photos/cute-cats',
+				'https://www.instagram.com/',
+				'https://www.pinterest.com/',
+				'https://www.reddit.com/',
+				'https://www.youtube.com/',
+				'https://9gag.com/'
+			];
+			setTimeout(() => {
+				window.location.href = goTo[Math.floor(Math.random() * goTo.length)];
+			}, 2000)
 		}
 	},
 	created() {
