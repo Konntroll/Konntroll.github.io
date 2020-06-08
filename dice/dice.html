@@ -1,0 +1,107 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>n-Puzzle</title>
+		<link rel="stylesheet" type="text/css" href="dice.css">
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	</head>
+	<body>
+		<div id="dice">
+			<dice></dice>
+		</div>
+	</body>
+</html>
+
+<script>
+
+Vue.component('dicenum', {
+	props: {
+		dienum: Number,
+	},
+	template: `
+		<div class="dienum"
+			 v-on:click="change">{{this.dienum}}</div>
+	`,
+	methods: {
+		change() {
+			this.$emit('change', this.dienum);
+		}
+	}
+})
+
+var dice = new Vue ({
+	el: '#dice',
+	data: {
+		dice: 1,
+		difficulty: 6,
+		result: 0,
+		roll: ""
+	},
+	template: `
+		<div id="dice">
+			<div class="header" id="difficulty">Difficulty</div>
+			<div class="header" id="dicenum">Dice</div>
+			<div class="header" id="result">Result</div>
+			<div class="plusminus"
+				 v-on:click="adjustDifficulty(-1)">-</div>
+			<div class="varparams" id="difficultyval">{{difficulty}}</div>
+			<div class="plusminus"
+				 v-on:click="adjustDifficulty(1)">+</div>
+			<div class="varparams" id="dicenum">{{dice}}</div>
+			<div class="varparams" id="result">{{result}}</div>
+				<dicenum v-for="n in 13" 
+						 v-bind:key="n"
+						 v-bind:dienum="n"
+						 v-on:change="newDieTotal"></dicenum>
+			<div class="plusminus"
+				 v-on:click="addDice">+</div>
+			<div class="header" id="roll" v-on:click="rollDice()">Roll</div>
+			<div class="varparams" id="roll" v-if="roll">{{roll}}</div>
+		</div>
+	`,
+	methods: {
+		newDieTotal(tots) {
+			this.dice = tots;
+		},
+		adjustDifficulty(step) {
+			this.difficulty += step;
+			if (this.difficulty < 1) this.difficulty = 1;
+			if (this.difficulty > 10) this.difficulty = 10;
+		},
+		addDice() {
+			if (this.dice < 20) {
+				this.dice++;
+			}
+		},
+		rollDice() {
+			var die = 0;
+			var unprocessedRes = [];
+			this.roll = "";
+			this.result = 0;
+			while (die < this.dice) {
+				var dieRoll = Math.floor(Math.random() * 10 + 1);
+				if (dieRoll >= this.difficulty) this.result++;
+				if (dieRoll == 1) this.result--;
+				unprocessedRes.push(dieRoll);
+				die++;
+			}
+			this.resFilter(unprocessedRes);
+		},
+		resFilter(results) {
+			var output = [];
+			for (var die = 1; die < 11; die++) {
+				var holder = [];
+				holder = results.filter(dieRes => dieRes == die);
+				if (holder.length > 1) {
+					output.push(die + "×" + holder.length);
+				} else if (holder.length == 1) {
+					output.push(die);
+				}
+			}
+			this.roll = output.join(", ");
+		}
+	}
+})
+
+</script>
