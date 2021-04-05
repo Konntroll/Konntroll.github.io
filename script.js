@@ -1,5 +1,5 @@
 let heights = new Map([
-    ['moi', '360px'],
+    ['moi', '160px'],
     ['vtm', '360px'],
     ['carcassonne', '360px'],
     ['dixit', '335px'],
