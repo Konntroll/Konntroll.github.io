@@ -24,7 +24,10 @@ function toggle(id) {
         document.getElementById(current + "Logo").classList.add('collapsed');
         document.getElementById(current + "Text").classList.add('collapsed');
         document.getElementById(current + "Ext").classList.add('collapsed');
-        if (current == id) return;
+        if (current == id) {
+            current = "";
+            return;
+        }
     }
     current = id;
     document.getElementById(id).classList.remove('collapsed');
