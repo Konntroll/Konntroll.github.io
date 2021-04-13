@@ -5,8 +5,8 @@ let heights = new Map([
     ['dixit', '335px'],
     ['npuzzle', '320px'],
     ['memory', '270px'],
-    ['telegram', '320px'],
-    ['draft', '335px']
+    ['telegram', '350px'],
+    ['draft', '390px']
 ]);
 
 let current = "memory";
